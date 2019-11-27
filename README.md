@@ -1,9 +1,9 @@
 future
 ======
 
-The `future` package aims to provide a wide but simple interface for consuming return values and/or errors from a `Future`.
+The `future` package aims to provide a simple interface for consuming return values and/or errors from a `Future`.
 
-It provides two interfaces: `Future` and `SettableFuture`.
+It provides the `SettableFuture` struct and a `Future` interface for consumers.
 This distinction allows explicit decoupling of value providers and consumers.
 
 The following example demonstrates the interfaces:
