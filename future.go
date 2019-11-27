@@ -58,7 +58,7 @@ func (f *SettableFuture) Err() error {
 }
 
 // Value returns the value after a value is set.
-func (f SettableFuture) Value() interface{} {
+func (f *SettableFuture) Value() interface{} {
 	return f.value
 }
 
