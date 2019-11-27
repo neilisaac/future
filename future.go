@@ -21,20 +21,15 @@ type Future interface {
 // It may be downcast to a Future.
 // This is sometimes referred to as a promise, but that would be
 // confusing in a library called future.
-type SettableFuture interface {
-	Future
-	Set(interface{}, error)
-}
-
-type future struct {
+type SettableFuture struct {
 	value interface{}
 	err   error
 	done  chan struct{}
 }
 
 // New creates a new Future that can be Set or waited on.
-func New() SettableFuture {
-	return &future{
+func New() *SettableFuture {
+	return &SettableFuture{
 		value: nil,
 		err:   nil,
 		done:  make(chan struct{}),
@@ -43,7 +38,7 @@ func New() SettableFuture {
 
 // Set provides the value or error associated for a Future.
 // Set may only be called once, or it will panic.
-func (f *future) Set(value interface{}, err error) {
+func (f *SettableFuture) Set(value interface{}, err error) {
 	f.value = value
 	f.err = err
 	close(f.done)
@@ -51,31 +46,31 @@ func (f *future) Set(value interface{}, err error) {
 
 // Done returns a channel which is closed when the result is set.
 // This mimics the context.Context interface.
-func (f *future) Done() <-chan struct{} {
+func (f *SettableFuture) Done() <-chan struct{} {
 	return f.done
 }
 
 // Err returns an error after a value is set.
 // This is useful in cases where the result value is not needed.
 // This mimics the context.Context interface.
-func (f *future) Err() error {
+func (f *SettableFuture) Err() error {
 	return f.err
 }
 
 // Value returns the value after a value is set.
-func (f future) Value() interface{} {
+func (f SettableFuture) Value() interface{} {
 	return f.value
 }
 
 // Result returns the result and error after a value is set.
-func (f *future) Result() (interface{}, error) {
+func (f *SettableFuture) Result() (interface{}, error) {
 	return f.value, f.err
 }
 
 // Wait blocks until the provided context expires or the Future's value is set,
 // then returns the associated value and error.
 // It returns the context's Err() value if the context expires first.
-func (f *future) Wait(ctx context.Context) (interface{}, error) {
+func (f *SettableFuture) Wait(ctx context.Context) (interface{}, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -88,7 +83,7 @@ func (f *future) Wait(ctx context.Context) (interface{}, error) {
 // the callback if a nil error was set.
 // The callback must be a function accepting a single argument of the Future's value type.
 // Then returns after the callback was invoked or skipped.
-func (f *future) Then(callback interface{}) Future {
+func (f *SettableFuture) Then(callback interface{}) Future {
 	fnType := reflect.TypeOf(callback)
 	fnValue := reflect.ValueOf(callback)
 	if fnType.Kind() != reflect.Func {
@@ -111,7 +106,7 @@ func (f *future) Then(callback interface{}) Future {
 // Catch blocks until the Future's value is set, then invokes
 // the callback if a non-nil error was set.
 // Catch returns after the callback was invoked or skipped.
-func (f *future) Catch(callback func(err error)) Future {
+func (f *SettableFuture) Catch(callback func(err error)) Future {
 	<-f.Done()
 	if err := f.Err(); err != nil {
 		callback(err)
