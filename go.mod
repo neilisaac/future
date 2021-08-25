@@ -1,3 +1,3 @@
-module github.com/jordanbangia/future
+module github.com/neilisaac/future
 
 go 1.13
