@@ -113,3 +113,9 @@ func (f *SettableFuture) Catch(callback func(err error)) Future {
 	}
 	return f
 }
+
+// String converts the settable future to a string representation,
+// otherwise most testing frameworks will throw a data race
+func (f *SettableFuture) String() string {
+	return fmt.Sprintf("SettableFuture<%p>", f)
+}
