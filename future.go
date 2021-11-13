@@ -12,7 +12,7 @@ type Future[T any] interface {
 	Value() T
 	Result() (*T, error)
 	Wait(context.Context) (*T, error)
-	Then(func(T)) Future[T]
+	Then(func(T) (T, error)) Future[T]
 	Catch(func(error)) Future[T]
 }
 
@@ -35,10 +35,11 @@ func New[T any]() *SettableFuture[T] {
 
 // Set provides the value or error associated for a Future.
 // Set may only be called once, or it will panic.
-func (f *SettableFuture[T]) Set(value T, err error) {
+func (f *SettableFuture[T]) Set(value T, err error) Future[T] {
 	f.value = &value
 	f.err = err
 	close(f.done)
+	return f
 }
 
 // Done returns a channel which is closed when the result is set.
@@ -72,20 +73,20 @@ func (f *SettableFuture[T]) Wait(ctx context.Context) (*T, error) {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case <-f.Done():
-		return f.value, f.Err()
+		return f.Result()
 	}
 }
 
-// Then blocks until the Future's value is set, then invokes
-// the callback if a nil error was set.
-// The callback must be a function accepting a single argument of the Future's value type.
-// Then returns after the callback was invoked or skipped.
-func (f *SettableFuture[T]) Then(callback func(T)) Future[T] {
+// Then blocks until the Future's value is set, then either
+// returns the existing future if an error was set, or
+// invokes the callback and returns a new Future wrapping its result.
+func (f *SettableFuture[T]) Then(callback func(T) (T, error)) Future[T] {
 	<-f.Done()
-	if err := f.Err(); err == nil {
-		callback(f.Value())
+	if err := f.Err(); err != nil {
+		return f
 	}
-	return f
+
+	return New[T]().Set(callback(f.Value()))
 }
 
 // Catch blocks until the Future's value is set, then invokes

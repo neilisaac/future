@@ -3,6 +3,7 @@ package future
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -53,19 +54,20 @@ func TestFutureWait(t *testing.T) {
 }
 
 func TestFutureThen(t *testing.T) {
-	f := New[int]()
-	f.Set(1, nil)
-
-	var got int
-
-	f.Then(func(value int) {
-		got = value
+	result, err := New[int]().Set(1, nil).Then(func(value int) (int, error) {
+		if value != 1 {
+			t.Errorf("Then callback called with %d, expected 1", value)
+		}
+		return value+1, nil
 	}).Catch(func(err error) {
 		t.Errorf("Catch called with %#v", err)
-	})
+	}).Result()
 
-	if got != 1 {
-		t.Errorf("Then not called with 1: %d", got)
+	if *result != 2 {
+		fmt.Errorf("Result was %d, expected 1", result)
+	}
+	if err != nil {
+		fmt.Errorf("Error was %#v", err)
 	}
 }
 
@@ -75,8 +77,9 @@ func TestFutureCatch(t *testing.T) {
 
 	var got error
 
-	f.Then(func(value *string) {
+	f.Then(func(value *string) (*string, error) {
 		t.Errorf("Then called with: %#v", value)
+		return value, nil
 	}).Catch(func(err error) {
 		got = err
 	})
