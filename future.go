@@ -29,7 +29,7 @@ type SettableFuture[T any] struct {
 // New creates a new Future that can be Set or waited on.
 func New[T any]() *SettableFuture[T] {
 	return &SettableFuture[T]{
-		done:  make(chan struct{}),
+		done: make(chan struct{}),
 	}
 }
 
@@ -85,7 +85,6 @@ func (f *SettableFuture[T]) Then(callback func(T) (T, error)) Future[T] {
 	if err := f.Err(); err != nil {
 		return f
 	}
-
 	return New[T]().Set(callback(f.Value()))
 }
 
