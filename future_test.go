@@ -58,7 +58,7 @@ func TestFutureThen(t *testing.T) {
 		if value != 1 {
 			t.Errorf("Then callback called with %d, expected 1", value)
 		}
-		return value+1, nil
+		return value + 1, nil
 	}).Catch(func(err error) {
 		t.Errorf("Catch called with %#v", err)
 	}).Result()
@@ -68,6 +68,26 @@ func TestFutureThen(t *testing.T) {
 	}
 	if err != nil {
 		fmt.Errorf("Error was %#v", err)
+	}
+}
+
+func TestFutureThenError(t *testing.T) {
+	catchCalls := 0
+	err := New[int]().Set(1, nil).Then(func(value int) (int, error) {
+		return 0, fmt.Errorf("error from first then")
+	}).Catch(func(err error) {
+		catchCalls++
+	}).Then(func(value int) (int, error) {
+		return 0, fmt.Errorf("error from second then")
+	}).Catch(func(err error) {
+		catchCalls++
+	}).Err()
+
+	if err.Error() != "error from first then" {
+		fmt.Errorf("Error was %#v", err)
+	}
+	if catchCalls != 2 {
+		fmt.Errorf("Catch called %d times, expected 2", catchCalls)
 	}
 }
 
