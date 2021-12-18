@@ -10,8 +10,8 @@ type Future[T any] interface {
 	Done() <-chan struct{}
 	Err() error
 	Value() T
-	Result() (*T, error)
-	Wait(context.Context) (*T, error)
+	Result() (T, error)
+	Wait(context.Context) (T, error)
 	Then(func(T) (T, error)) Future[T]
 	Catch(func(error)) Future[T]
 }
@@ -21,7 +21,7 @@ type Future[T any] interface {
 // This is sometimes referred to as a promise, but that would be
 // confusing in a library called future.
 type SettableFuture[T any] struct {
-	value *T
+	value T
 	err   error
 	done  chan struct{}
 }
@@ -36,7 +36,7 @@ func New[T any]() *SettableFuture[T] {
 // Set provides the value or error associated for a Future.
 // Set may only be called once, or it will panic.
 func (f *SettableFuture[T]) Set(value T, err error) Future[T] {
-	f.value = &value
+	f.value = value
 	f.err = err
 	close(f.done)
 	return f
@@ -57,21 +57,22 @@ func (f *SettableFuture[T]) Err() error {
 
 // Value returns the value after a value is set.
 func (f *SettableFuture[T]) Value() T {
-	return *f.value
+	return f.value
 }
 
 // Result returns the result and error after a value is set.
-func (f *SettableFuture[T]) Result() (*T, error) {
+func (f *SettableFuture[T]) Result() (T, error) {
 	return f.value, f.err
 }
 
 // Wait blocks until the provided context expires or the Future's value is set,
 // then returns the associated value and error.
 // It returns the context's Err() value if the context expires first.
-func (f *SettableFuture[T]) Wait(ctx context.Context) (*T, error) {
+func (f *SettableFuture[T]) Wait(ctx context.Context) (T, error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		var nilValue T
+		return nilValue, ctx.Err()
 	case <-f.Done():
 		return f.Result()
 	}

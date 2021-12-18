@@ -30,11 +30,11 @@ func TestFutureBasics(t *testing.T) {
 		t.Errorf("error should be nil: %#v", err)
 	}
 
-	if value, err := f.Result(); *value != 1 || err != nil {
+	if value, err := f.Result(); value != 1 || err != nil {
 		t.Errorf("wrong result from Result call: %#v, %#v", value, err)
 	}
 
-	if value, err := f.Wait(context.Background()); *value != 1 || err != nil {
+	if value, err := f.Wait(context.Background()); value != 1 || err != nil {
 		t.Errorf("wrong result from Wait call: %#v, %#v", value, err)
 	}
 }
@@ -45,7 +45,7 @@ func TestFutureWait(t *testing.T) {
 
 	var f Future[int] = New[int]()
 	value, err := f.Wait(ctx)
-	if value != nil {
+	if value != 0 {
 		t.Errorf("value is not nil: %#v", value)
 	}
 	if err != context.Canceled {
@@ -63,7 +63,7 @@ func TestFutureThen(t *testing.T) {
 		t.Errorf("Catch called with %#v", err)
 	}).Result()
 
-	if *result != 2 {
+	if result != 2 {
 		fmt.Errorf("Result was %d, expected 1", result)
 	}
 	if err != nil {

@@ -15,8 +15,8 @@ var f future.Future = settableFuture
 <-f.Done()
 fmt.Println(f.Value())  // prints 1
 fmt.Println(f.Err())    // prints <nil>
-fmt.Println(f.Result()) // prints [pointer value] <nil>
-fmt.Println(f.Wait(context.Background())) // prints [pointer value] <nil>
+fmt.Println(f.Result()) // prints 1 <nil>
+fmt.Println(f.Wait(context.Background())) // prints 1 <nil>
 
 f.Then(func(i int) {
     fmt.Println(i) // prints 1
